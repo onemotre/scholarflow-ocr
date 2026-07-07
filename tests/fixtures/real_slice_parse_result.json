@@ -1,0 +1,619 @@
+{
+ "pages": [
+  {
+   "page_num": 0,
+   "meta": {
+    "page_width": 612,
+    "page_height": 792
+   },
+   "layouts": [
+    {
+     "layout_id": "1Y3HgC-layout-1",
+     "type": "aside_text",
+     "text": "arXiv:2203.04955v2 [cs.LG] 19 Jul 2022",
+     "position": [
+      14,
+      216,
+      21,
+      344
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "1Y3HgC-layout-2",
+     "type": "doc_title",
+     "text": "Temporal Difference Learning for Model Predictive Control",
+     "position": [
+      113,
+      88,
+      370,
+      17
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "1Y3HgC-layout-3",
+     "type": "text",
+     "text": "Nicklas Hansen $ ^{1} $ Xiaolong Wang $ ^{*1} $ Hao Su $ ^{*1} $",
+     "position": [
+      194,
+      140,
+      205,
+      13
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "1Y3HgC-layout-4",
+     "type": "paragraph_title",
+     "text": "Abstract",
+     "position": [
+      148,
+      175,
+      48,
+      12
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "1Y3HgC-layout-5",
+     "type": "abstract",
+     "text": "Data-driven model predictive control has two key advantages over model-free methods: a potential for improved sample efficiency through model learning, and better performance as computational budget for planning increases. However, it is both costly to plan over long horizons and challenging to obtain an accurate model of the environment. In this work, we combine the strengths of model-free and model-based methods. We use a learned task-oriented latent dynamics model for local trajectory optimization over a short horizon, and use a learned terminal value function to estimate long-term return, both of which are learned jointly by temporal difference learning. Our method, TD-MPC, achieves superior sample efficiency and asymptotic performance over prior work on both state and image-based continuous control tasks from DMControl and MetaWorld. Code and videos are available at https://nicklashansen.github.io/td-mpc.",
+     "position": [
+      72,
+      192,
+      201,
+      239
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "1Y3HgC-layout-6",
+     "type": "paragraph_title",
+     "text": "1. Introduction",
+     "position": [
+      54,
+      455,
+      80,
+      12
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "1Y3HgC-layout-7",
+     "type": "text",
+     "text": "To achieve desired behavior in an environment, a Reinforcement Learning (RL) agent needs to iteratively interact and consolidate knowledge about the environment. Planning is a powerful approach to such sequential decision making problems, and has achieved tremendous success in application areas such as game-playing (Kaiser et al., 2020; Schrittwieser et al., 2020) and continuous control (Tassa et al., 2012; Chua et al., 2018; Janner et al., 2019). By utilizing an internal model of the environment, an agent can plan a trajectory of actions ahead of time that leads to the desired behavior; this is in contrast to model-free algorithms that learn a policy purely through trial-and-error.",
+     "position": [
+      52,
+      476,
+      240,
+      144
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "1Y3HgC-layout-8",
+     "type": "text",
+     "text": "Concretely, prior work on model-based methods can largely be subdivided into two directions, each exploiting key ad-",
+     "position": [
+      52,
+      625,
+      240,
+      24
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "1Y3HgC-layout-9",
+     "type": "image",
+     "text": "",
+     "position": [
+      323,
+      170,
+      199,
+      107
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "1Y3HgC-layout-10",
+     "type": "chart",
+     "text": "",
+     "position": [
+      307,
+      286,
+      233,
+      147
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "1Y3HgC-layout-11",
+     "type": "figure_title",
+     "text": "Figure 1. Overview. (Top) We present a framework for MPC using a task-oriented latent dynamics model and value function learned jointly by temporal difference learning. We perform trajectory optimization over model rollouts and use the value function for long-term return estimates. (Bottom) Episode return of our method, SAC, and MPC with a ground-truth simulator on challenging, high-dimensional Humanoid and Dog tasks (Tassa et al., 2018). Mean of 5 runs; shaded areas are 95% confidence intervals.",
+     "position": [
+      304,
+      439,
+      239,
+      87
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "1Y3HgC-layout-12",
+     "type": "text",
+     "text": "advantages of model-based learning: (i) planning, which is advantageous over a learned policy, but it can be prohibitively expensive to plan over long horizons (Janner et al., 2019; Lowrey et al., 2019; Hafner et al., 2019; Argenson & Dulac-Arnold, 2021); and (ii) using a learned model to improve sample-efficiency of model-free methods by e.g. learning from generated rollouts, but this makes model biases likely to propagate to the policy as well (Ha & Schmidhuber, 2018; Hafner et al., 2020b; Clavera et al., 2020). As a result, model-based methods have historically struggled to outperform simpler, model-free methods (Srinivas et al., 2020; Kostrikov et al., 2020) in continuous control tasks.",
+     "position": [
+      303,
+      533,
+      241,
+      143
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "1Y3HgC-layout-13",
+     "type": "text",
+     "text": "Can we instead augment model-based planning with the strengths of model-free learning? Because of the immense cost of long-horizon planning, Model Predictive Control",
+     "position": [
+      304,
+      682,
+      240,
+      36
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "1Y3HgC-layout-14",
+     "type": "footnote",
+     "text": " $ ^{*} $Equal contribution  $ ^{1} $UC San Diego. Correspondence to: Nicklas Hansen <nihansen@ucsd.edu>.",
+     "position": [
+      53,
+      656,
+      239,
+      21
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "1Y3HgC-layout-15",
+     "type": "footnote",
+     "text": "Proceedings of the  $ 39^{th} $ International Conference on Machine Learning, Baltimore, Maryland, USA, PMLR 162, 2022. Copyright 2022 by the author(s).",
+     "position": [
+      52,
+      686,
+      239,
+      31
+     ],
+     "sub_type": ""
+    }
+   ]
+  },
+  {
+   "page_num": 1,
+   "meta": {
+    "page_width": 612,
+    "page_height": 792
+   },
+   "layouts": [
+    {
+     "layout_id": "Gx9ZUZ-layout-16",
+     "type": "header",
+     "text": "TD-Learning for MPC",
+     "position": [
+      253,
+      46,
+      90,
+      10
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "Gx9ZUZ-layout-17",
+     "type": "text",
+     "text": "(MPC) optimizes a trajectory over a shorter, finite horizon, which yields only temporally local optimal solutions. MPC can be extended to approximate globally optimal solutions by using a terminal value function that estimates discounted return beyond the planning horizon. However, obtaining an accurate model and value function can be challenging.",
+     "position": [
+      52,
+      68,
+      240,
+      73
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "Gx9ZUZ-layout-18",
+     "type": "text",
+     "text": "In this work, we propose Temporal Difference Learning for Model Predictive Control (TD-MPC), a framework for data-driven MPC using a task-oriented latent dynamics model and terminal value function learned jointly by temporal difference (TD) learning. At each decision step, we perform trajectory optimization using short-term reward estimates generated by the learned model, and use the learned value function for long-term return estimates. For example, in the Humanoid locomotion task shown in Figure 1, planning with a model may be beneficial for accurate joint movement, whereas the higher-level objective, e.g. direction of running, can be guided by long-term value estimates.",
+     "position": [
+      52,
+      145,
+      239,
+      144
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "Gx9ZUZ-layout-19",
+     "type": "text",
+     "text": "A key technical contribution is how the model is learned. While prior work learns a model through state or video prediction, we argue that it is remarkably inefficient to model everything in the environment, including irrelevant quantities and visuals such as shading, as this approach suffers from model inaccuracies and compounding errors. To overcome these challenges, we make three key changes to model learning. Firstly, we learn the latent representation of the dynamics model purely from rewards, ignoring nuances unnecessary for the task at hand. This makes the learning more sample efficient than state/image prediction. Secondly, we back-propagate gradients from the reward and TD-objective through multiple rollout steps of the model, improving reward and value predictions over long horizons. This alleviates error compounding when conducting rollouts. Lastly, we propose a modality-agnostic prediction loss in latent space that enforces temporal consistency in the learned representation without explicit state or image prediction.",
+     "position": [
+      52,
+      295,
+      241,
+      217
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "Gx9ZUZ-layout-20",
+     "type": "text",
+     "text": "We evaluate our method on a variety of continuous control tasks from DMControl (Tassa et al., 2018) and Meta-World (Yu et al., 2019), where we find that our method achieves superior sample efficiency and asymptotic performance over prior model-based and model-free methods. In particular, our method solves Humanoid and Dog locomotion tasks with up to 38-dimensional continuous action spaces in as little as 1M environment steps (see Figure 1), and is trivially extended to match the state-of-the-art in image-based RL.",
+     "position": [
+      52,
+      516,
+      240,
+      108
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "Gx9ZUZ-layout-21",
+     "type": "paragraph_title",
+     "text": "2. Preliminaries",
+     "position": [
+      52,
+      639,
+      86,
+      12
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "Gx9ZUZ-layout-22",
+     "type": "text",
+     "text": "Problem formulation. We consider infinite-horizon Markov Decision Processes (MDP) characterized by a tuple $(\\mathcal{S}, \\mathcal{A}, \\mathcal{T}, \\mathcal{R}, \\gamma, p_0)$, where $\\mathcal{S} \\in \\mathbb{R}^n$ and $\\mathcal{A} \\in \\mathbb{R}^m$ are continuous state and action spaces, $\\mathcal{T} : \\mathcal{S} \\times \\mathcal{A} \\times \\mathcal{S} \\mapsto \\mathbb{R}_+$ is the transition (dynamic) function, $\\mathcal{R} : \\mathcal{S} \\times \\mathcal{A} \\mapsto \\mathbb{R}$ is a reward function, $\\gamma \\in [0,1)$ is a discount factor, and $p_0$ is the initial state distribution. We aim to learn a parameterized mapping $\\Pi_\\theta: \\mathcal{S} \\mapsto \\mathcal{A}$ with parameters $\\theta$ such that discounted return $\\mathbb{E}_{\\Gamma \\sim \\Pi_\\theta}[\\sum_{t=1}^{\\infty} \\gamma^t r_t]$, $r_t \\sim \\mathcal{R}(\\cdot | \\mathbf{s}_t, \\mathbf{a}_t)$ is maximized along a trajectory $\\Gamma = (\\mathbf{s}_0, \\mathbf{a}_0, \\mathbf{s}_1, \\ldots)$ following $\\Pi_\\theta$ by sampling an action $\\mathbf{a}_t \\sim \\Pi_\\theta(\\cdot | \\mathbf{s}_t)$ and reaching state $\\mathbf{s}_{t+1} \\sim \\mathcal{T}(\\cdot | \\mathbf{s}_t, \\mathbf{a}_t)$ at each decision step $t$.",
+     "position": [
+      52,
+      660,
+      239,
+      48
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "Gx9ZUZ-layout-23",
+     "type": "text",
+     "text": "",
+     "position": [
+      303,
+      68,
+      240,
+      97
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "Gx9ZUZ-layout-24",
+     "type": "text",
+     "text": "Fitted Q-iteration. Model-free TD-learning algorithms aim to estimate an optimal state-action value function  $ Q^*\\colon \\mathcal{S} \\times \\mathcal{A} \\to \\mathbb{R} $ using a parametric value function  $ Q_\\theta(\\mathbf{s}, \\mathbf{a}) \\approx Q^*(\\mathbf{s}, \\mathbf{a}) = \\max_{\\mathbf{a}'} \\mathbb{E}[\\mathcal{R}(\\mathbf{s}, \\mathbf{a}) + \\gamma Q^*(\\mathbf{s}', \\mathbf{a}')] \\forall \\mathbf{s} \\in \\mathcal{S} $ where  $ \\mathbf{s}' $,  $ \\mathbf{a}' $ is the state and action at the following step, and  $ \\theta $ parameterizes the function (Sutton, 2005). For  $ \\gamma \\approx 1 $,  $ Q^* $ estimates discounted return for the optimal policy over an infinite horizon. While  $ Q^* $ is generally unknown, it can be approximated by repeatedly fitting  $ Q_\\theta $ using the update rule",
+     "position": [
+      303,
+      170,
+      241,
+      120
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "Gx9ZUZ-layout-25",
+     "type": "display_formula",
+     "text": " $$ \\theta^{k+1}\\leftarrow\\arg\\min_{\\theta}\\mathbb{E}_{(\\mathbf{s},\\mathbf{a},\\mathbf{s}^{\\prime})\\sim\\mathcal{B}}\\left\\|Q_{\\theta}(\\mathbf{s},\\mathbf{a})-y\\right\\|_{2}^{2} $$ ",
+     "position": [
+      330,
+      298,
+      187,
+      18
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "Gx9ZUZ-layout-26",
+     "type": "formula_number",
+     "text": "(1)",
+     "position": [
+      529,
+      300,
+      13,
+      11
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "Gx9ZUZ-layout-27",
+     "type": "text",
+     "text": "where the $Q$-target $y = \\mathcal{R}(\\mathbf{s}, \\mathbf{a}) + \\gamma \\max_{\\mathbf{a}'} Q_{\\theta^-}(\\mathbf{s}', \\mathbf{a}')$, $\\mathcal{B}$ is a replay buffer that is iteratively grown as new data is collected, and $\\theta^-$ is a slow-moving average of the online parameters $\\theta$ updated with the rule $\\theta_{k+1}^- \\longleftarrow (1 - \\zeta) \\theta_k^-$ $\\zeta \\theta_k$ at each iteration using a constant coefficient $\\zeta \\in [0,1)$.",
+     "position": [
+      303,
+      326,
+      241,
+      61
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "Gx9ZUZ-layout-28",
+     "type": "text",
+     "text": "Model Predictive Control. In actor-critic RL algorithms,  $ \\Pi $ is typically a policy parameterized by a neural network that learns to approximate  $ \\Pi_{\\theta}(\\cdot|\\mathbf{s}) \\approx \\arg \\max_{\\mathbf{a}} \\mathbb{E}[Q_{\\theta}(\\mathbf{s},\\mathbf{a})] \\forall \\mathbf{s} \\in \\mathcal{S} $, i.e., the globally optimal policy. In control,  $ \\Pi $ is traditionally implemented as a trajectory optimization procedure. To make the problem tractable, one typically obtains a local solution to the trajectory optimization problem at each step  $ t $ by estimating optimal actions  $ \\mathbf{a}_{t:t+H} $ over a finite horizon  $ H $ and executing the first action  $ \\mathbf{a}_t $, known as Model Predictive Control (MPC):",
+     "position": [
+      303,
+      392,
+      242,
+      120
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "Gx9ZUZ-layout-29",
+     "type": "display_formula",
+     "text": " $$ \\Pi_{\\theta}^{\\mathrm{M P C}}(\\mathbf{s}_{t})=\\arg\\max_{\\mathbf{a}_{t:t+H}}\\mathbb{E}\\left[\\sum_{i=t}^{H}\\gamma^{i}\\mathcal{R}(\\mathbf{s}_{i},\\mathbf{a}_{i})\\right], $$ ",
+     "position": [
+      331,
+      521,
+      185,
+      33
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "Gx9ZUZ-layout-30",
+     "type": "formula_number",
+     "text": "(2)",
+     "position": [
+      529,
+      532,
+      13,
+      11
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "Gx9ZUZ-layout-31",
+     "type": "text",
+     "text": "where $\\gamma$, unlike in fitted Q-iteration, is typically set to 1, i.e., no discounting. Intuitively, Equation 2 can be viewed as a special case of the standard additive-cost optimal control objective. A solution can be found by iteratively fitting parameters of a family of distributions, e.g., $\\mu$, $\\sigma$ for a multivariate Gaussian with diagonal covariance, to the space of actions over a finite horizon using the derivative-free Cross-Entropy Method (CEM; Rubinstein (1997)), and sample trajectories generated by a model. As opposed to fitted Q-iteration, Equation 2 is not predictive of long-term rewards, hence a myopic solution. When a value function is known (e.g. a heuristic or in the context of our method: estimated using Equation 1), it can be used in conjunction with",
+     "position": [
+      304,
+      563,
+      241,
+      156
+     ],
+     "sub_type": ""
+    }
+   ]
+  },
+  {
+   "page_num": 2,
+   "meta": {
+    "page_width": 612,
+    "page_height": 792
+   },
+   "layouts": [
+    {
+     "layout_id": "TxyYgT-layout-32",
+     "type": "header",
+     "text": "TD-Learning for MPC",
+     "position": [
+      253,
+      45,
+      90,
+      11
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "TxyYgT-layout-33",
+     "type": "text",
+     "text": "Equation 2 to estimate discounted return at state  $ s_{t+H} $ and beyond; such methods are known as MPC with a terminal value function. In the following, we consider parameterized mappings  $ \\Pi $ from both the perspective of actor-critic RL algorithms and model predictive control (planning). To dis-ambiguate these concepts, we refer to planning with MPC as  $ \\Pi_\\theta $ and a policy network as  $ \\pi_\\theta $. We generically denote parameterization using neural networks as  $ \\theta $ (online) and  $ \\theta^- $ (target; slow-moving average of  $ \\theta $) as combined feature vectors.",
+     "position": [
+      52,
+      68,
+      240,
+      120
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "TxyYgT-layout-34",
+     "type": "paragraph_title",
+     "text": "3. TD-Learning for Model Predictive Control",
+     "position": [
+      52,
+      202,
+      235,
+      13
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "TxyYgT-layout-35",
+     "type": "text",
+     "text": "We propose TD-MPC, a framework that combines MPC with a task-oriented latent dynamics model and terminal value function jointly learned using TD-learning in an online RL setting. Specifically, TD-MPC leverages Model Predictive Path Integral (MPPI; Williams et al. (2015)) control for planning (denoted  $ \\Pi_{\\theta} $), learned models  $ d_{\\theta}, R_{\\theta} $ of the (latent) dynamics and reward signal, respectively, a terminal state-action value function  $ Q_{\\theta} $, and a parameterized policy  $ \\pi_{\\theta} $ that helps guide planning. We summarize our framework in Figure 1 and Algorithm 1. In this section, we detail the inference-time behavior of our method, while we defer discussion of training to Section 4.",
+     "position": [
+      52,
+      222,
+      240,
+      144
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "TxyYgT-layout-36",
+     "type": "text",
+     "text": "MPPI is an MPC algorithm that iteratively updates parameters for a family of distributions using an importance weighted average of the estimated top-$k$ sampled trajectories (in terms of expected return); in practice, we fit parameters of a time-dependent multivariate Gaussian with diagonal covariance. We adapt MPPI as follows. Starting from initial parameters ($\\mu^0, \\sigma^0$) $t:t+H$, $\\mu^0$, $\\sigma^0 \\in \\mathbb{R}^m$, $\\mathcal{A} \\in \\mathbb{R}^m$, i.e. independent parameters for each action over a horizon of length $H$, we independently sample $N$ trajectories using rollouts generated by the learned model $d_\\theta$, and estimate the total return $\\phi_\\Gamma$ of a sampled trajectory $\\Gamma$ as",
+     "position": [
+      52,
+      371,
+      240,
+      132
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "TxyYgT-layout-37",
+     "type": "display_formula",
+     "text": " $$ \\begin{array}{r l}&{\\phi_{\\Gamma}\\triangleq\\mathbb{E}_{\\Gamma}\\left[\\gamma^{H}Q_{\\theta}(\\mathbf{z}_{H},\\mathbf{a}_{H})+\\displaystyle\\sum_{t=0}^{H-1}\\gamma^{t}R_{\\theta}(\\mathbf{z}_{t},\\mathbf{a}_{t})\\right],}\\end{array} $$ ",
+     "position": [
+      62,
+      508,
+      206,
+      33
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "TxyYgT-layout-38",
+     "type": "formula_number",
+     "text": "(3)",
+     "position": [
+      277,
+      520,
+      12,
+      10
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "TxyYgT-layout-39",
+     "type": "text",
+     "text": "where  $ \\mathbf{z}_{\\mathbf{t}+1} = d_{\\theta}(\\mathbf{z}_t, \\mathbf{a}_t) $ and  $ \\mathbf{a}_t \\sim \\mathcal{N}(\\mu_t^{j-1}, (\\sigma_t^{j-1})^2 I) $ at iteration  $ j-1 $, as highlighted in red in Algorithm 1. We select the top- $ k $ returns  $ \\phi_\\Gamma^\\star $ and obtain new parameters  $ \\mu^j $,  $ \\sigma^j $ at iteration  $ j $ from a  $ \\phi_\\Gamma^\\star $-normalized empirical estimate:",
+     "position": [
+      52,
+      546,
+      237,
+      50
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "TxyYgT-layout-40",
+     "type": "display_formula",
+     "text": " $$ \\mu^{j}=\\frac{\\sum_{i=1}^{k}\\Omega_{i}\\Gamma_{i}^{\\star}}{\\sum_{i=1}^{k}\\Omega_{i}},\\sigma^{j}=\\sqrt{\\frac{\\sum_{i=1}^{k}\\Omega_{i}(\\Gamma_{i}^{\\star}-\\mu^{j})^{2}}{\\sum_{i=1}^{k}\\Omega_{i}}}, $$ ",
+     "position": [
+      61,
+      603,
+      207,
+      35
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "TxyYgT-layout-41",
+     "type": "formula_number",
+     "text": "(4)",
+     "position": [
+      277,
+      616,
+      12,
+      10
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "TxyYgT-layout-42",
+     "type": "text",
+     "text": "where  $ \\Omega_i = e^{\\tau(\\phi^*_{\\Gamma,i})} $,  $ \\tau $ is a temperature parameter controlling the “sharpness” of the weighting, and  $ \\Gamma_i^\\star $ denotes the  $ i $th top- $ k $ trajectory corresponding to return estimate  $ \\phi_\\Gamma^* $. After a fixed number of iterations  $ J $, the planning procedure is terminated and a trajectory is sampled from the final return-normalized distribution over action sequences. We plan at",
+     "position": [
+      51,
+      645,
+      240,
+      73
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "TxyYgT-layout-43",
+     "type": "algorithm",
+     "text": "Algorithm 1 TD-MPC (inference)\n\nRequire: $\\theta$: learned network parameters\n$\\mu^0, \\sigma^0$: initial parameters for $\\mathcal{N}$\n$N, N_{\\pi}$: num sample/policy trajectories\n$\\mathbf{s}_t, H$: current state, rollout horizon\n\n1: Encode state $\\mathbf{z}_t \\leftarrow h_{\\theta}(\\mathbf{s}_t) \\quad \\triangleq$ Assuming TOLD model\n\n2: for each iteration $j = 1...J$ do\n\n3: Sample $N$ traj. of len. $H$ from $\\mathcal{N}(\\mu^{j-1}, (\\sigma^{j-1})^2I)$\n\n4: Sample $N_{\\pi}$ traj. of length $H$ using $\\pi_{\\theta}, d_{\\theta}$\n// Estimate trajectory returns $\\phi_{\\Gamma}$ using $d_{\\theta}, R_{\\theta}, Q_{\\theta}$, starting from $\\mathbf{z}_t$ and initially letting $\\phi_{\\Gamma} = 0$:\n\n5: for all $N + N_{\\pi}$ trajectories $(\\mathbf{a}_t, \\mathbf{a}_{t+1}, \\ldots, \\mathbf{a}_{t+H})$ do\n\n6: for step $t = 0...H - 1$ do\n\n7: $\\phi_{\\Gamma} = \\phi_{\\Gamma} + \\gamma^t R_{\\theta}(\\mathbf{z}_t, \\mathbf{a}_t)$ $\\triangleleft$ Reward\n\n8: $\\mathbf{z}_{t+1} \\leftarrow d_{\\theta}(\\mathbf{z}_t, \\mathbf{a}_t)$ $\\triangleleft$ Latent transition\n\n9: $\\phi_{\\Gamma} = \\phi_{\\Gamma} + \\gamma^H Q_{\\theta}(\\mathbf{z}_H, \\mathbf{a}_H)$ $\\triangleleft$ Terminal value\n// Update parameters $\\mu$, $\\sigma$ for next iteration:\n\n10: $\\mu^j, \\sigma^j = \\text{Equation 4 (and Equation 5)}$\n\n11: return $\\mathbf{a} \\sim \\mathcal{N}(\\mu^J, (\\sigma^J)^2I)$",
+     "position": [
+      304,
+      70,
+      240,
+      231
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "TxyYgT-layout-44",
+     "type": "text",
+     "text": "each decision step  $ t $ and execute only the first action, i.e., we employ receding-horizon MPC to produce a feedback policy. To reduce the number of iterations required for convergence, we “warm start” trajectory optimization at each step  $ t $ by reusing the 1-step shifted mean  $ \\mu $ obtained at the previous step (Argenson & Dulac-Arnold, 2021), but always use a large initial variance to avoid local minima.",
+     "position": [
+      303,
+      315,
+      241,
+      85
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "TxyYgT-layout-45",
+     "type": "text",
+     "text": "Exploration by planning. Model-free RL algorithms such as DDPG (Lillicrap et al., 2016) encourage exploration by injecting action noise (e.g. Gaussian or Ornstein-Uhlenbeck noise) into the learned policy  $ \\pi_{\\theta} $ during training, optionally following a linear annealing schedule. While our trajectory optimization procedure is inherently stochastic due to trajectory sampling, we find that the rate at which  $ \\sigma $ decays varies wildly between tasks, leading to (potentially poor) local optima for small  $ \\sigma $. To promote consistent exploration across tasks, we constrain the std. deviation of the sampling distribution such that, for a  $ \\mu^{j} $ obtained from Equation 4 at iteration j, we instead update  $ \\sigma^{j} $ to",
+     "position": [
+      303,
+      405,
+      241,
+      144
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "TxyYgT-layout-46",
+     "type": "display_formula",
+     "text": " $$ \\sigma^{j}=\\max\\left(\\sqrt{\\frac{\\sum_{i=1}^{N}\\Omega_{i}(\\Gamma_{i}^{\\star}-\\mu^{j})^{2}}{\\sum_{i=1}^{N}\\Omega_{i}}},\\;\\epsilon\\right)\\;, $$ ",
+     "position": [
+      334,
+      558,
+      178,
+      37
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "TxyYgT-layout-47",
+     "type": "formula_number",
+     "text": "(5)",
+     "position": [
+      529,
+      571,
+      12,
+      11
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "TxyYgT-layout-48",
+     "type": "text",
+     "text": "where  $ \\epsilon \\in \\mathbb{R}_+ $ is a linearly decayed constant. Likewise, we linearly increase the planning horizon from 1 to  $ H $ in the early stages of training, as the model is initially inaccurate and planning would therefore be dominated by model bias.",
+     "position": [
+      304,
+      604,
+      239,
+      49
+     ],
+     "sub_type": ""
+    },
+    {
+     "layout_id": "TxyYgT-layout-49",
+     "type": "text",
+     "text": "Policy-guided trajectory optimization. Analogous to Schrittwieser et al. (2020); Sikchi et al. (2022), TD-MPC learns a policy  $ \\pi_{\\theta} $ in addition to planning procedure  $ \\Pi_{\\theta} $, and augments the sampling procedure with additional samples from  $ \\pi_{\\theta} $ (highlighted in blue in Algorithm 1). This leads to",
+     "position": [
+      304,
+      658,
+      240,
+      61
+     ],
+     "sub_type": ""
+    }
+   ]
+  }
+ ]
+}

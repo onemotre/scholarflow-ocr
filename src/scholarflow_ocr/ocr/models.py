@@ -4,10 +4,12 @@ from typing import Protocol
 
 @dataclass(frozen=True)
 class LayoutBox:
-    layout_id: int
+    # PaddleOCR-VL returns layout_id as an opaque string (e.g. "1Y3HgC-layout-1"),
+    # so keep it as-is rather than coercing to int.
+    layout_id: str
     type: str
     text: str
-    position: tuple[float, float, float, float]  # x, y, w, h (pixels)
+    position: tuple[float, float, float, float]  # x, y, w, h (page coord space)
     sub_type: str = ""
 
 
@@ -40,7 +42,7 @@ def parse_result_from_json(data: dict) -> ParseResult:
         meta = p.get("meta", {}) or {}
         layouts = tuple(
             LayoutBox(
-                layout_id=int(lay.get("layout_id", 0) or 0),
+                layout_id=str(lay.get("layout_id", "") or ""),
                 type=str(lay.get("type", "") or ""),
                 text=str(lay.get("text", "") or ""),
                 position=_position(lay.get("position")),
