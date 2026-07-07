@@ -1,4 +1,6 @@
 import base64
+import os
+import re
 import time
 
 import httpx
@@ -9,6 +11,22 @@ from scholarflow_ocr.ocr.models import ParseResult, parse_result_from_json
 
 class OCRError(Exception):
     pass
+
+
+def _safe_file_name(name: str) -> str:
+    """Sanitize the file_name sent to PaddleOCR-VL.
+
+    The server passes the MinIO object key (e.g. "papers/<uuid>/x.pdf"); Baidu
+    rejects a file_name containing slashes with "parse document task failed", so
+    reduce it to a clean basename with an extension.
+    """
+    base = os.path.basename((name or "").strip()).strip()
+    base = re.sub(r"\s+", "_", base)
+    if not base or base.startswith("."):
+        base = "upload.pdf"
+    if not os.path.splitext(base)[1]:
+        base += ".pdf"
+    return base
 
 
 class BaiduOCRClient:
@@ -53,7 +71,7 @@ class BaiduOCRClient:
             "POST",
             f"{self._base()}/rest/2.0/brain/online/v2/paddle-vl-parser/task",
             params={"access_token": token},
-            data={"file_data": base64.b64encode(pdf).decode("ascii"), "file_name": file_name},
+            data={"file_data": base64.b64encode(pdf).decode("ascii"), "file_name": _safe_file_name(file_name)},
         )
         if body.get("error_code"):
             raise OCRError(f"submit failed: {body.get('error_code')} {body.get('error_msg')}")

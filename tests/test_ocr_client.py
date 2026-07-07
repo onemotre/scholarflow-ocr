@@ -52,6 +52,27 @@ def test_submit_error_raises(monkeypatch):
         client.parse(b"x", "p.pdf")
 
 
+def test_submit_uses_basename_filename():
+    # Baidu PaddleOCR-VL rejects a file_name containing slashes ("parse document
+    # task failed"). The server sends the MinIO object key (papers/<uuid>/x.pdf),
+    # so the client must submit only the sanitized basename.
+    from urllib.parse import parse_qs
+
+    seen = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/oauth/2.0/token"):
+            return httpx.Response(200, json={"access_token": "tok"})
+        seen["file_name"] = parse_qs(request.content.decode())["file_name"][0]
+        return httpx.Response(200, json={"error_code": 0, "result": {"task_id": "T"}})
+
+    cfg = load_config()
+    client = BaiduOCRClient(cfg, client=httpx.Client(transport=httpx.MockTransport(handler)))
+    client._submit(client._access_token(), b"x", "papers/ab-cd/My Paper.pdf")
+    assert "/" not in seen["file_name"]
+    assert seen["file_name"] == "My_Paper.pdf"
+
+
 def test_parse_result_from_json_empty():
     assert parse_result_from_json({}).pages == ()
 
