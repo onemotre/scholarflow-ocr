@@ -18,10 +18,10 @@ def test_split_entries_numbered():
 
 
 def test_parse_entry_extracts_fields():
-    ref = parse_entry(1, "A. Smith and B. Jones. A great title. Journal of Foo, 2020. doi:10.1/xyz")
+    ref = parse_entry(1, "A. Smith and B. Jones. A great title. Journal of Foo, 2020. doi:10.1000/xyz")
     assert ref.order == 1
     assert ref.year == "2020"
-    assert ref.doi == "10.1/xyz"
+    assert ref.doi == "10.1000/xyz"
     assert "A great title" in ref.title
     assert ref.raw_text.startswith("A. Smith")
     assert any("Smith" in a for a in ref.authors)

@@ -5,10 +5,9 @@ from scholarflow_ocr.parse.text import normalize
 
 _HEADING = re.compile(r"^\s*(references|bibliography)\s*$", re.IGNORECASE)
 _MARKER = re.compile(r"(?:^|\n)\s*\[\d+\]\s*|(?:^|\n)\s*\d+\.\s+")
-_DOI = re.compile(r"10\.\d+/[^\s,;]+")
+_DOI = re.compile(r"10\.\d{4,9}/[^\s,;]+")
 _YEAR = re.compile(r"(?:19|20)\d{2}")
-# Leading author run: sequences like "A. Smith, B. Jones." up to the first "."
-# that is followed by a capitalized title word. Heuristic and best-effort.
+# Matches a leading run of and/comma-separated author names, best-effort.
 _AUTHORS = re.compile(r"^(?P<authors>(?:[A-Z]\.?\s*)*[A-Z][a-z]+(?:(?:\s+and\s+|,\s+)(?:[A-Z]\.?\s*)*[A-Z][a-z]+)*(?:\.\s*)?)")
 
 
