@@ -1,0 +1,115 @@
+{
+  "pages": [
+    {
+      "page_num": 1,
+      "page_id": 1,
+      "meta": {
+        "page_width": 612.0,
+        "page_height": 792.0
+      },
+      "layouts": [
+        {
+          "layout_id": 1,
+          "type": "title",
+          "text": "Deep Learning for Natural Language Processing",
+          "position": [36.0, 60.0, 540.0, 100.0],
+          "sub_type": "main_title"
+        },
+        {
+          "layout_id": 2,
+          "type": "text",
+          "text": "Authors: Jane Smith, John Doe",
+          "position": [36.0, 110.0, 540.0, 130.0],
+          "sub_type": "author"
+        },
+        {
+          "layout_id": 3,
+          "type": "text",
+          "text": "Abstract",
+          "position": [36.0, 160.0, 100.0, 175.0],
+          "sub_type": "heading"
+        },
+        {
+          "layout_id": 4,
+          "type": "text",
+          "text": "This paper presents a comprehensive overview of deep learning techniques applied to natural language processing tasks. We review transformer-based architectures and their applications in machine translation, sentiment analysis, and text classification.",
+          "position": [36.0, 180.0, 540.0, 250.0],
+          "sub_type": "paragraph"
+        },
+        {
+          "layout_id": 5,
+          "type": "text",
+          "text": "1. Introduction",
+          "position": [36.0, 280.0, 180.0, 295.0],
+          "sub_type": "heading"
+        },
+        {
+          "layout_id": 6,
+          "type": "text",
+          "text": "Natural language processing (NLP) has undergone significant transformation with the advent of deep learning. Recent advances in neural architectures have led to unprecedented performance improvements across diverse NLP tasks.",
+          "position": [36.0, 300.0, 540.0, 370.0],
+          "sub_type": "paragraph"
+        },
+        {
+          "layout_id": 7,
+          "type": "image",
+          "text": "Figure 1: Architecture of Transformer",
+          "position": [100.0, 380.0, 512.0, 500.0],
+          "sub_type": "figure"
+        },
+        {
+          "layout_id": 8,
+          "type": "text",
+          "text": "2. References",
+          "position": [36.0, 530.0, 150.0, 545.0],
+          "sub_type": "heading"
+        },
+        {
+          "layout_id": 9,
+          "type": "text",
+          "text": "[1] Vaswani, A., et al. (2017). Attention is all you need. In Advances in neural information processing systems (pp. 5998-6008).",
+          "position": [36.0, 550.0, 540.0, 570.0],
+          "sub_type": "reference"
+        },
+        {
+          "layout_id": 10,
+          "type": "text",
+          "text": "[2] Devlin, J., et al. (2018). BERT: Pre-training of deep bidirectional transformers for language understanding. arXiv preprint arXiv:1810.04805.",
+          "position": [36.0, 575.0, 540.0, 595.0],
+          "sub_type": "reference"
+        }
+      ]
+    },
+    {
+      "page_num": 2,
+      "page_id": 2,
+      "meta": {
+        "page_width": 612.0,
+        "page_height": 792.0
+      },
+      "layouts": [
+        {
+          "layout_id": 11,
+          "type": "text",
+          "text": "3. Conclusions",
+          "position": [36.0, 60.0, 180.0, 75.0],
+          "sub_type": "heading"
+        },
+        {
+          "layout_id": 12,
+          "type": "text",
+          "text": "Deep learning has fundamentally changed the landscape of NLP. We have demonstrated that transformer-based models achieve state-of-the-art results across multiple benchmarks.",
+          "position": [36.0, 80.0, 540.0, 150.0],
+          "sub_type": "paragraph"
+        },
+        {
+          "layout_id": 13,
+          "type": "text",
+          "text": "[3] Brown, T., et al. (2020). Language models are few-shot learners. In Advances in neural information processing systems (pp. 1877-1901).",
+          "position": [36.0, 180.0, 540.0, 200.0],
+          "sub_type": "reference"
+        }
+      ]
+    }
+  ]
+}
