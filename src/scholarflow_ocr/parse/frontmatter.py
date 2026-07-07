@@ -1,0 +1,66 @@
+import re
+from dataclasses import dataclass
+
+from scholarflow_ocr.ocr.models import Page
+from scholarflow_ocr.parse.document import Author
+from scholarflow_ocr.parse.layout import LAYOUT_TEXT, LAYOUT_TITLE
+from scholarflow_ocr.parse.text import normalize, split_name
+
+_DOI = re.compile(r"10\.\d{4,9}/[^\s,;]+")
+_YEAR = re.compile(r"(?:19|20)\d{2}")
+_ABSTRACT = re.compile(r"^abstract\b", re.IGNORECASE)
+
+
+@dataclass(frozen=True)
+class FrontMatter:
+    title: str
+    abstract: str
+    authors: tuple[Author, ...]
+    doi: str
+    year: str
+
+
+def _authors_from(text: str) -> tuple[Author, ...]:
+    names = [normalize(part) for part in re.split(r"[,;]| and ", text) if normalize(part)]
+    authors: list[Author] = []
+    for name in names:
+        fore, sur = split_name(name)
+        if sur:
+            authors.append(Author(fore, sur))
+    return tuple(authors)
+
+
+def extract_frontmatter(first_page: Page) -> FrontMatter:
+    title = ""
+    abstract_parts: list[str] = []
+    author_text = ""
+    in_abstract = False
+    seen_title = False
+
+    for box in first_page.layouts:
+        text = normalize(box.text)
+        if box.type in LAYOUT_TITLE:
+            if _ABSTRACT.match(text):
+                in_abstract = True
+                continue
+            in_abstract = False
+            if not seen_title and text:
+                title = text
+                seen_title = True
+            continue
+        if box.type in LAYOUT_TEXT:
+            if in_abstract:
+                abstract_parts.append(text)
+            elif seen_title and not author_text and not abstract_parts:
+                author_text = text
+    abstract = " ".join(p for p in abstract_parts if p).strip()
+    haystack = f"{author_text} {abstract}"
+    doi_m = _DOI.search(haystack)
+    year_m = _YEAR.search(haystack)
+    return FrontMatter(
+        title=title,
+        abstract=abstract,
+        authors=_authors_from(author_text),
+        doi=doi_m.group(0) if doi_m else "",
+        year=year_m.group(0) if year_m else "",
+    )
