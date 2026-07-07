@@ -1,0 +1,15 @@
+services:
+  ocr:
+    build: .
+    ports:
+      - "${HTTP_PORT:-8070}:8070"
+    environment:
+      BAIDU_OCR_APP_ID: ${BAIDU_OCR_APP_ID}
+      BAIDU_OCR_API_KEY: ${BAIDU_OCR_API_KEY}
+      BAIDU_OCR_SECRET_KEY: ${BAIDU_OCR_SECRET_KEY}
+      BAIDU_OCR_ENDPOINT: ${BAIDU_OCR_ENDPOINT:-https://aip.baidubce.com}
+      HTTP_PORT: 8070
+      OCR_POLL_TIMEOUT_SECONDS: ${OCR_POLL_TIMEOUT_SECONDS:-300}
+      OCR_POLL_INTERVAL_SECONDS: ${OCR_POLL_INTERVAL_SECONDS:-3}
+      MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-33554432}
+    restart: unless-stopped
