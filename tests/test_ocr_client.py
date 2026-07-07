@@ -54,3 +54,15 @@ def test_submit_error_raises(monkeypatch):
 
 def test_parse_result_from_json_empty():
     assert parse_result_from_json({}).pages == ()
+
+
+def test_http_status_error_raises_ocrerror():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/oauth/2.0/token"):
+            return httpx.Response(500, json={"error": "internal server error"})
+        return httpx.Response(404)
+
+    cfg = load_config()
+    client = BaiduOCRClient(cfg, client=httpx.Client(transport=httpx.MockTransport(handler)))
+    with pytest.raises(OCRError):
+        client.parse(b"x", "p.pdf")

@@ -25,8 +25,17 @@ class BaiduOCRClient:
     def _base(self) -> str:
         return self._cfg.ocr_endpoint
 
+    def _request_json(self, method: str, url: str, **kwargs) -> dict:
+        try:
+            resp = self._http.request(method, url, **kwargs)
+            resp.raise_for_status()
+            return resp.json()
+        except httpx.HTTPError as exc:
+            raise OCRError(f"HTTP call failed ({method} {url}): {exc}") from exc
+
     def _access_token(self) -> str:
-        resp = self._http.post(
+        body = self._request_json(
+            "POST",
             f"{self._base()}/oauth/2.0/token",
             params={
                 "grant_type": "client_credentials",
@@ -34,20 +43,18 @@ class BaiduOCRClient:
                 "client_secret": self._cfg.secret_key,
             },
         )
-        resp.raise_for_status()
-        token = resp.json().get("access_token")
+        token = body.get("access_token")
         if not token:
             raise OCRError("no access_token in oauth response")
         return token
 
     def _submit(self, token: str, pdf: bytes, file_name: str) -> str:
-        resp = self._http.post(
+        body = self._request_json(
+            "POST",
             f"{self._base()}/rest/2.0/brain/online/v2/paddle-vl-parser/task",
             params={"access_token": token},
             data={"file_data": base64.b64encode(pdf).decode("ascii"), "file_name": file_name},
         )
-        resp.raise_for_status()
-        body = resp.json()
         if body.get("error_code"):
             raise OCRError(f"submit failed: {body.get('error_code')} {body.get('error_msg')}")
         task_id = (body.get("result") or {}).get("task_id")
@@ -58,13 +65,12 @@ class BaiduOCRClient:
     def _poll(self, token: str, task_id: str) -> str:
         deadline = time.monotonic() + self._cfg.poll_timeout_seconds
         while True:
-            resp = self._http.post(
+            body = self._request_json(
+                "POST",
                 f"{self._base()}/rest/2.0/brain/online/v2/paddle-vl-parser/task/query",
                 params={"access_token": token},
                 data={"task_id": task_id},
             )
-            resp.raise_for_status()
-            body = resp.json()
             if body.get("error_code"):
                 raise OCRError(f"query failed: {body.get('error_code')} {body.get('error_msg')}")
             result = body.get("result") or {}
@@ -81,6 +87,4 @@ class BaiduOCRClient:
             time.sleep(self._cfg.poll_interval_seconds)
 
     def _fetch_json(self, url: str) -> dict:
-        resp = self._http.get(url)
-        resp.raise_for_status()
-        return resp.json()
+        return self._request_json("GET", url)

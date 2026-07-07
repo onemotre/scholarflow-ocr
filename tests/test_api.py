@@ -63,3 +63,16 @@ def test_process_ocr_error_returns_502():
         files={"input": ("p.pdf", b"%PDF-1.4 x", "application/pdf")},
     )
     assert resp.status_code == 502
+
+
+def test_process_oversized_upload_returns_413():
+    app = create_app(
+        ocr_client=FakeOCRClient(_fake_result()),
+        sizes_fn=lambda pdf: [(500.0, 700.0)],
+        max_upload_bytes=10,
+    )
+    resp = TestClient(app).post(
+        "/api/processFulltextDocument",
+        files={"input": ("paper.pdf", b"%PDF-1.4 way more than ten bytes", "application/pdf")},
+    )
+    assert resp.status_code == 413
