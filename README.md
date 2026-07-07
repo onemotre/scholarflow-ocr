@@ -7,7 +7,9 @@ parsing) and mapping the returned layout into the TEI subset that
 
 It impersonates GROBID's HTTP contract (`POST /api/processFulltextDocument`,
 multipart PDF in → TEI out), so the server integrates by repointing `GROBID_URL`
-at this service — no server code change.
+at this service — no change to the wire protocol. The only server-side code
+change is making GROBID's hardcoded 2-minute client timeout configurable (async
+OCR of a large PDF can exceed it); see `docs/server-integration.md`.
 
 ## Run
 
