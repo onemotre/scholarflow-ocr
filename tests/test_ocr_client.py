@@ -56,6 +56,19 @@ def test_parse_result_from_json_empty():
     assert parse_result_from_json({}).pages == ()
 
 
+def test_parse_result_normalizes_page_num_to_one_based():
+    # PaddleOCR-VL numbers pages from 0; downstream + TEI @coords need 1-based
+    # (the server rejects page <= 0). Page number is derived from array position.
+    data = {
+        "pages": [
+            {"page_num": 0, "meta": {"page_width": 612, "page_height": 792}, "layouts": []},
+            {"page_num": 1, "meta": {"page_width": 612, "page_height": 792}, "layouts": []},
+        ]
+    }
+    result = parse_result_from_json(data)
+    assert [p.page_num for p in result.pages] == [1, 2]
+
+
 def test_http_status_error_raises_ocrerror():
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path.endswith("/oauth/2.0/token"):
