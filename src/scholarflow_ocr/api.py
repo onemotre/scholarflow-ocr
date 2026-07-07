@@ -39,6 +39,7 @@ def create_app(ocr_client=None, sizes_fn=None) -> FastAPI:
         pdf = await upload.read()
         if not pdf:
             return Response(content="empty upload", status_code=400)
+        # Untrusted input boundary: any failure to parse the uploaded bytes as a PDF is treated as a 400 bad upload (pypdf raises varied exception types on malformed input).
         try:
             sizes = _sizes(pdf)
         except Exception as exc:  # malformed PDF

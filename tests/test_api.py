@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from scholarflow_ocr.api import create_app
+from scholarflow_ocr.ocr.client import OCRError
 from scholarflow_ocr.ocr.fake import FakeOCRClient
 from scholarflow_ocr.ocr.models import LayoutBox, Page, ParseResult
 
@@ -39,3 +40,26 @@ def test_process_returns_tei(monkeypatch):
 def test_process_missing_file_returns_400(monkeypatch):
     resp = _client(monkeypatch).post("/api/processFulltextDocument", data={"x": "y"})
     assert resp.status_code == 400
+
+
+def test_process_malformed_pdf_returns_400():
+    # Real page_point_sizes (no sizes_fn stub) → pypdf rejects garbage → 400.
+    app = create_app(ocr_client=FakeOCRClient(_fake_result()))
+    resp = TestClient(app).post(
+        "/api/processFulltextDocument",
+        files={"input": ("bad.pdf", b"this is not a pdf", "application/pdf")},
+    )
+    assert resp.status_code == 400
+
+
+def test_process_ocr_error_returns_502():
+    class _RaisingClient:
+        def parse(self, pdf, file_name):
+            raise OCRError("boom")
+
+    app = create_app(ocr_client=_RaisingClient(), sizes_fn=lambda pdf: [(500.0, 700.0)])
+    resp = TestClient(app).post(
+        "/api/processFulltextDocument",
+        files={"input": ("p.pdf", b"%PDF-1.4 x", "application/pdf")},
+    )
+    assert resp.status_code == 502
