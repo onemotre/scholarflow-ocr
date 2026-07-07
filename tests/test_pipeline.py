@@ -22,5 +22,8 @@ def test_build_document_end_to_end():
     assert any(s.heading == "Introduction" and s.number == "1" for s in doc.sections)
     # references heading is NOT a body section
     assert all(s.heading != "References" for s in doc.sections)
+    # page-1 front-matter (title/authors/Abstract) is excluded from the body
+    # sections now that it's dropped up to the first numbered heading.
+    assert all(s.heading not in ("Cool Paper", "Abstract") for s in doc.sections)
     assert len(doc.references) == 1
     assert doc.references[0].year == "2020"

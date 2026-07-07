@@ -12,7 +12,7 @@ LAYOUT_TEXT = {"text", "paragraph", "plain_text"}
 LAYOUT_FIGURE = {"image", "figure", "table", "chart"}
 _TABLE_TYPES = {"table"}
 
-_NUM = re.compile(r"^(\d+(?:\.\d+)*)\s+(.*)$")
+_NUM = re.compile(r"^(\d+(?:\.\d+)*)\.?\s+(.*)$")
 _FIG_LABEL = re.compile(r"^((?:figure|fig\.?|table)\s*\d+)", re.IGNORECASE)
 
 
@@ -36,6 +36,13 @@ def _figure_label(caption: str, fallback_n: int, kind: str) -> str:
     if m:
         return m.group(1)
     return f"{'Table' if kind == 'table' else 'Figure'} {fallback_n}"
+
+
+def _infer_kind_from_caption(text: str) -> str:
+    m = _FIG_LABEL.match(normalize(text))
+    if m and m.group(1).lower().startswith("table"):
+        return "table"
+    return "figure"
 
 
 def build_body(
@@ -71,5 +78,31 @@ def build_body(
             figures.append(
                 Figure(kind, _figure_label(caption, order, kind), caption, _coords(page, box, sizes))
             )
+        elif box.type == "figure_title":
+            # A figure_title block is a figure's caption+label, reported as a
+            # separate layout box from the graphic (image/chart/table) it
+            # belongs to. Associate it with the most recent figure on this
+            # page that still has an empty caption, preserving that figure's
+            # own bbox/coords. If none is pending, append a caption-only figure.
+            text = normalize(box.text)
+            if text:
+                target = next(
+                    (i for i in range(len(figures) - 1, -1, -1) if not figures[i].caption),
+                    None,
+                )
+                if target is not None:
+                    fig = figures[target]
+                    figures[target] = Figure(
+                        fig.kind, _figure_label(text, order, fig.kind), text, fig.coords
+                    )
+                else:
+                    order += 1
+                    kind = _infer_kind_from_caption(text)
+                    figures.append(
+                        Figure(kind, _figure_label(text, order, kind), text, _coords(page, box, sizes))
+                    )
+        elif box.type == "abstract":
+            # Front-matter owns the abstract; never a body paragraph/section.
+            continue
     flush()
     return sections, figures, order

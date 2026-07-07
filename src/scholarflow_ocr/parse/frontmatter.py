@@ -10,6 +10,12 @@ _DOI = re.compile(r"10\.\d{4,9}/[^\s,;]+")
 _YEAR = re.compile(r"(?:19|20)\d{2}")
 _ABSTRACT = re.compile(r"^abstract\b", re.IGNORECASE)
 
+# Real PaddleOCR-VL author lines carry LaTeX affiliation markers, e.g.
+# "Nicklas Hansen $ ^{1} $ Xiaolong Wang $ ^{*1} $ Hao Su $ ^{*1} $".
+_LATEX_MATH_SPAN = re.compile(r"\$[^$]*\$")
+_LATEX_SUPERSCRIPT = re.compile(r"\^\{[^}]*\}|\^\S+")
+_AUTHOR_SPLIT = re.compile(r"\s{2,}|[,;]|\s+and\s+")
+
 
 @dataclass(frozen=True)
 class FrontMatter:
@@ -20,10 +26,21 @@ class FrontMatter:
     year: str
 
 
+def _strip_latex_affiliation_markers(text: str) -> str:
+    """Remove LaTeX math spans and leftover superscript markers from an author line."""
+    text = _LATEX_MATH_SPAN.sub(" ", text)
+    text = _LATEX_SUPERSCRIPT.sub(" ", text)
+    return text
+
+
+def _split_author_names(text: str) -> list[str]:
+    cleaned = _strip_latex_affiliation_markers(text)
+    return [normalize(part) for part in _AUTHOR_SPLIT.split(cleaned) if normalize(part)]
+
+
 def _authors_from(text: str) -> tuple[Author, ...]:
-    names = [normalize(part) for part in re.split(r"[,;]| and ", text) if normalize(part)]
     authors: list[Author] = []
-    for name in names:
+    for name in _split_author_names(text):
         fore, sur = split_name(name)
         if sur:
             authors.append(Author(fore, sur))
@@ -47,6 +64,12 @@ def extract_frontmatter(first_page: Page) -> FrontMatter:
             if not seen_title and text:
                 title = text
                 seen_title = True
+            continue
+        if box.type == "abstract":
+            # Real PaddleOCR-VL emits the abstract BODY as its own dedicated
+            # type, independent of the "Abstract" heading. Always capture it.
+            if text:
+                abstract_parts.append(text)
             continue
         if box.type in LAYOUT_TEXT:
             if in_abstract:
